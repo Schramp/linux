@@ -99,6 +99,15 @@ config BLK_DEV_THROTTLING
 
 	See Documentation/cgroups/blkio-controller.txt for more information.
 
+config BLK_PREVENT_WRITE
+	bool "Stop writes from accessing the block device"
+	default n
+	help
+	  For forensics strong guards need to be in place that prevent writing to disk beyond
+	  the protection offered by userspace guards at the device filesystem layer. This flag add's a
+	  blocking capability at the block io layer.
+
+
 menu "Partition Types"
 
 source "block/partitions/Kconfig"

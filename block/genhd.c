@@ -987,6 +987,9 @@ static DEVICE_ATTR(discard_alignment, S_IRUGO, disk_discard_alignment_show,
 static DEVICE_ATTR(capability, S_IRUGO, disk_capability_show, NULL);
 static DEVICE_ATTR(stat, S_IRUGO, part_stat_show, NULL);
 static DEVICE_ATTR(inflight, S_IRUGO, part_inflight_show, NULL);
+#ifdef CONFIG_BLK_PREVENT_WRITE
+static DEVICE_ATTR(prevent_write, S_IRUGO | S_IWUSR, prevent_write_show, prevent_write_store);
+#endif
 #ifdef CONFIG_FAIL_MAKE_REQUEST
 static struct device_attribute dev_attr_fail =
 	__ATTR(make-it-fail, S_IRUGO|S_IWUSR, part_fail_show, part_fail_store);
@@ -1008,6 +1011,9 @@ static struct attribute *disk_attrs[] = {
 	&dev_attr_capability.attr,
 	&dev_attr_stat.attr,
 	&dev_attr_inflight.attr,
+#ifdef CONFIG_BLK_PREVENT_WRITE
+	&dev_attr_prevent_write.attr,
+#endif
 #ifdef CONFIG_FAIL_MAKE_REQUEST
 	&dev_attr_fail.attr,
 #endif
@@ -1265,6 +1271,9 @@ struct gendisk *alloc_disk_node(int minors, int node_id)
 			kfree(disk);
 			return NULL;
 		}
+#ifdef CONFIG_BLK_PREVENT_WRITE
+		disk->part0.prevent_write=1; //Forensics should prevent writing from the start
+#endif
 		disk->part_tbl->part[0] = &disk->part0;
 
 		/*

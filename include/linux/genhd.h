@@ -114,6 +114,9 @@ struct hd_struct {
 	struct kobject *holder_dir;
 	int policy, partno;
 	struct partition_meta_info *info;
+#ifdef CONFIG_BLK_PREVENT_WRITE
+	int prevent_write;
+#endif
 #ifdef CONFIG_FAIL_MAKE_REQUEST
 	int make_it_fail;
 #endif
@@ -632,6 +635,14 @@ extern ssize_t part_stat_show(struct device *dev,
 			      struct device_attribute *attr, char *buf);
 extern ssize_t part_inflight_show(struct device *dev,
 			      struct device_attribute *attr, char *buf);
+
+#ifdef CONFIG_BLK_PREVENT_WRITE
+extern ssize_t prevent_write_show(struct device *dev,
+			      struct device_attribute *attr, char *buf);
+extern ssize_t prevent_write_store(struct device *dev,
+			       struct device_attribute *attr,
+			       const char *buf, size_t count);
+#endif /* CONFIG_BLK_PREVENT_WRITE */
 #ifdef CONFIG_FAIL_MAKE_REQUEST
 extern ssize_t part_fail_show(struct device *dev,
 			      struct device_attribute *attr, char *buf);

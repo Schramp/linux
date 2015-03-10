@@ -1606,6 +1606,23 @@ static void handle_bad_sector(struct bio *bio)
 	set_bit(BIO_EOF, &bio->bi_flags);
 }
 
+#ifdef CONFIG_BLK_PREVENT_WRITE
+
+static bool should_prevent_write(struct hd_struct *part, unsigned int bytes)
+{
+	return part->policy || part->prevent_write;
+}
+
+#else /* CONFIG_BLK_PREVENT_WRITE */
+
+static inline bool should_prevent_write(struct hd_struct *part,
+					unsigned int bytes)
+{
+	return false;
+}
+
+#endif /* CONFIG_BLK_PREVENT_WRITE */
+
 #ifdef CONFIG_FAIL_MAKE_REQUEST
 
 static DECLARE_FAULT_ATTR(fail_make_request);
@@ -1670,6 +1687,7 @@ static inline int bio_check_eod(struct bio *bio, unsigned int nr_sectors)
 	return 0;
 }
 
+/** RUSCH: This seems like a good place to validate RW policy */
 static noinline_for_stack bool
 generic_make_request_checks(struct bio *bio)
 {
@@ -1708,6 +1726,18 @@ generic_make_request_checks(struct bio *bio)
 	    should_fail_request(&part_to_disk(part)->part0,
 				bio->bi_size))
 		goto end_io;
+
+	if ((bio->bi_rw & (REQ_WRITE | REQ_WRITE_SAME)) && 
+	    (should_prevent_write(part, bio->bi_size) ||
+	     should_prevent_write(&part_to_disk(part)->part0,
+			 	bio->bi_size))) {
+		printk(KERN_ERR "bio to write protected device %s (%u)\n",
+		       bdevname(bio->bi_bdev, b),
+		       bio_sectors(bio));
+//		printk(KERN_ERR,"Write blocked on device %s (prevent_write or policy ro)\n",
+//				bdevname(bio->bi_bdev, b));
+		goto end_io;
+	}
 
 	/*
 	 * If this device has partitions, remap block n

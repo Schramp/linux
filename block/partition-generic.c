@@ -144,6 +144,29 @@ ssize_t part_inflight_show(struct device *dev,
 		atomic_read(&p->in_flight[1]));
 }
 
+#ifdef CONFIG_BLK_PREVENT_WRITE
+ssize_t prevent_write_show(struct device *dev,
+		       struct device_attribute *attr, char *buf)
+{
+	struct hd_struct *p = dev_to_part(dev);
+
+	return sprintf(buf, "%d\n", p->prevent_write);
+}
+
+ssize_t prevent_write_store(struct device *dev,
+			struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	struct hd_struct *p = dev_to_part(dev);
+	int i;
+
+	if (count > 0 && sscanf(buf, "%d", &i) > 0)
+		p->prevent_write = (i == 0) ? 0 : 1;
+
+	return count;
+}
+#endif
+
 #ifdef CONFIG_FAIL_MAKE_REQUEST
 ssize_t part_fail_show(struct device *dev,
 		       struct device_attribute *attr, char *buf)
@@ -176,6 +199,9 @@ static DEVICE_ATTR(discard_alignment, S_IRUGO, part_discard_alignment_show,
 		   NULL);
 static DEVICE_ATTR(stat, S_IRUGO, part_stat_show, NULL);
 static DEVICE_ATTR(inflight, S_IRUGO, part_inflight_show, NULL);
+#ifdef CONFIG_BLK_PREVENT_WRITE
+static DEVICE_ATTR(prevent_write, S_IRUGO | S_IWUSR, prevent_write_show, prevent_write_store);
+#endif
 #ifdef CONFIG_FAIL_MAKE_REQUEST
 static struct device_attribute dev_attr_fail =
 	__ATTR(make-it-fail, S_IRUGO|S_IWUSR, part_fail_show, part_fail_store);
@@ -190,6 +216,9 @@ static struct attribute *part_attrs[] = {
 	&dev_attr_discard_alignment.attr,
 	&dev_attr_stat.attr,
 	&dev_attr_inflight.attr,
+#ifdef CONFIG_BLK_PREVENT_WRITE
+	&dev_attr_prevent_write.attr,
+#endif
 #ifdef CONFIG_FAIL_MAKE_REQUEST
 	&dev_attr_fail.attr,
 #endif
@@ -306,6 +335,9 @@ struct hd_struct *add_partition(struct gendisk *disk, int partno,
 	p->nr_sects = len;
 	p->partno = partno;
 	p->policy = get_disk_ro(disk);
+#ifdef CONFIG_BLK_PREVENT_WRITE
+	p->prevent_write = 1 ; //In forensics the default state for a disk is readonly
+#endif 
 
 	if (info) {
 		struct partition_meta_info *pinfo = alloc_part_info(disk);
