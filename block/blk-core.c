@@ -1687,7 +1687,6 @@ static inline int bio_check_eod(struct bio *bio, unsigned int nr_sectors)
 	return 0;
 }
 
-/** RUSCH: This seems like a good place to validate RW policy */
 static noinline_for_stack bool
 generic_make_request_checks(struct bio *bio)
 {
@@ -1734,8 +1733,6 @@ generic_make_request_checks(struct bio *bio)
 		printk(KERN_ERR "bio to write protected device %s (%u)\n",
 		       bdevname(bio->bi_bdev, b),
 		       bio_sectors(bio));
-//		printk(KERN_ERR,"Write blocked on device %s (prevent_write or policy ro)\n",
-//				bdevname(bio->bi_bdev, b));
 		goto end_io;
 	}
 
