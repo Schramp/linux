@@ -1726,7 +1726,7 @@ generic_make_request_checks(struct bio *bio)
 				bio->bi_size))
 		goto end_io;
 
-	if ((bio->bi_rw & (REQ_WRITE | REQ_WRITE_SAME)) && 
+	if ((bio->bi_rw & (REQ_WRITE | REQ_WRITE_SAME | REQ_DISCARD)) &&
 	    (should_prevent_write(part, bio->bi_size) ||
 	     should_prevent_write(&part_to_disk(part)->part0,
 			 	bio->bi_size))) {
