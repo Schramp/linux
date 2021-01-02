@@ -555,6 +555,17 @@ static int uvc_parse_format(struct uvc_device *dev,
 				width_multiplier = 2;
 			}
 		}
+		if (dev->quirks & UVC_QUIRK_FORCE_BA81) {
+			uvc_trace(UVC_TRACE_DESCR, "Forcing UVC_QUIRK_FORCE_BA81\n");
+			if (format->fcc == V4L2_PIX_FMT_YUYV) {
+				strscpy(format->name, "BGGR Bayer (BA81)",
+					sizeof(format->name));
+				format->fcc = V4L2_PIX_FMT_SBGGR8;
+				format->bpp = 8;
+				width_multiplier = 2;
+			}
+		}
+
 
 		/* Some devices report bpp that doesn't match the format. */
 		if (dev->quirks & UVC_QUIRK_FORCE_BPP) {
@@ -2732,6 +2743,15 @@ static const struct usb_device_id uvc_ids[] = {
 	  .bInterfaceSubClass	= 1,
 	  .bInterfaceProtocol	= 0,
 	  .driver_info		= (kernel_ulong_t)&uvc_quirk_probe_minmax },
+	/* USB Microscope, Manufacturer: Winmax Corp. (ION Slides Forever) */
+	{ .match_flags		= USB_DEVICE_ID_MATCH_DEVICE
+				| USB_DEVICE_ID_MATCH_INT_INFO,
+	  .idVendor		= 0x0c45,
+	  .idProduct		= 0x6353,
+	  .bInterfaceClass	= USB_CLASS_VIDEO,
+	  .bInterfaceSubClass	= 1,
+	  .bInterfaceProtocol	= 0,
+	  .driver_info		= UVC_INFO_QUIRK(UVC_QUIRK_FORCE_BA81) },
 	/* MT6227 */
 	{ .match_flags		= USB_DEVICE_ID_MATCH_DEVICE
 				| USB_DEVICE_ID_MATCH_INT_INFO,
